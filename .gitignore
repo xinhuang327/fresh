@@ -26,3 +26,7 @@ _cgo_export.*
 _testmain.go
 
 *.exe
+
+.idea/
+
+.idea/libraries/GOPATH__fresh_.xml
