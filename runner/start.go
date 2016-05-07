@@ -54,18 +54,26 @@ func start() {
 				mainLog(err.Error())
 			}
 
-			errorMessage, ok := build()
-			if !ok {
-				mainLog("Build Failed: \n %s", errorMessage)
-				if !started {
-					os.Exit(1)
-				}
-				createBuildErrorsLog(errorMessage)
-			} else {
+			// use "go run" instead of build and run
+			if runFile() != "" {
 				if started {
 					stopChannel <- true
 				}
 				run()
+			} else {
+				errorMessage, ok := build()
+				if !ok {
+					mainLog("Build Failed: \n %s", errorMessage)
+					if !started {
+						os.Exit(1)
+					}
+					createBuildErrorsLog(errorMessage)
+				} else {
+					if started {
+						stopChannel <- true
+					}
+					run()
+				}
 			}
 
 			started = true

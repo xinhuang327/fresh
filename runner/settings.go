@@ -21,6 +21,7 @@ var settings = map[string]string{
 	"config_path":       "./runner.conf",
 	"root":              ".",
 	"tmp_path":          "./tmp",
+	"run_file":          "",
 	"build_name":        "runner-build",
 	"build_log":         "runner-build-errors.log",
 	"valid_ext":         ".go, .tpl, .tmpl, .html",
@@ -118,6 +119,11 @@ func tmpPath() string {
 func buildName() string {
 	return settings["build_name"]
 }
+
+func runFile() string {
+	return settings["run_file"]
+}
+
 func buildPath() string {
 	p := filepath.Join(tmpPath(), buildName())
 	if runtime.GOOS == "windows" && filepath.Ext(p) != ".exe" {

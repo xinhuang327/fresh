@@ -8,7 +8,14 @@ import (
 func run() bool {
 	runnerLog("Running...")
 
-	cmd := exec.Command(buildPath())
+	var cmd *exec.Cmd
+	// run_file won't work, because go run's subprocess won't be killed
+	if runFile() != "" {
+		cmd = exec.Command("go", "run", runFile())
+		runnerLog("Execute %s", cmd.Args)
+	} else {
+		cmd = exec.Command(buildPath())
+	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
