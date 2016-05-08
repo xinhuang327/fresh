@@ -107,6 +107,7 @@ func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 			//payloadStr := string(payload)
 			gitLog("Got payload from %s, type: %s", r.URL.Path, commitType)
 			if commitType == CommitType_TryDeploy && isGogs ||
+				commitType == CommitType_UpdateResources && isGogs ||
 				commitType == CommitType_ReleaseDeploy && isDrone {
 				gitLog("Start rebuild...")
 				gitStartChannel <- commitType
