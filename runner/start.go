@@ -53,9 +53,9 @@ func gitStart() {
 		for {
 			loopIndex++
 			mainLog("Waiting (loop %d)...", loopIndex)
-			<-gitStartChannel
+			commitType := <-gitStartChannel
 
-			mainLog("receiving git event")
+			//mainLog("receiving git event")
 			//mainLog("receiving first event %s", gitInfo)
 			mainLog("sleeping for %d milliseconds", buildDelay)
 			time.Sleep(buildDelay * time.Millisecond)
@@ -79,19 +79,25 @@ func gitStart() {
 				mainLog(err.Error())
 			}
 
-			errorMessage, ok := build()
-			if !ok {
-				mainLog("Build Failed: \n %s", errorMessage)
-				if !started {
-					//os.Exit(1)
-					continue
-				}
-				createBuildErrorsLog(errorMessage)
-			} else {
-				if started {
-					stopChannel <- true
-				}
+			if commitType == CommitType_UpdateResources && started {
+				// restart without build
+				stopChannel <- true
 				run()
+			} else {
+				errorMessage, ok := build()
+				if !ok {
+					mainLog("Build Failed: \n %s", errorMessage)
+					if !started {
+						//os.Exit(1)
+						continue
+					}
+					createBuildErrorsLog(errorMessage)
+				} else {
+					if started {
+						stopChannel <- true
+					}
+					run()
+				}
 			}
 
 			started = true

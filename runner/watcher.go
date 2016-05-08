@@ -45,8 +45,9 @@ func watchFolder(path string) {
 }
 
 const (
-	CommitType_TryDeploy     = "try dep"
-	CommitType_ReleaseDeploy = "rel dep"
+	CommitType_TryDeploy       = "try dep"
+	CommitType_ReleaseDeploy   = "rel dep"
+	CommitType_UpdateResources = "up res"
 )
 
 func commitTypeForMessage(msg string) string {
@@ -56,6 +57,9 @@ func commitTypeForMessage(msg string) string {
 	}
 	if strings.Index(lowerMsg, CommitType_ReleaseDeploy) > -1 {
 		return CommitType_ReleaseDeploy
+	}
+	if strings.Index(lowerMsg, CommitType_UpdateResources) > -1 {
+		return CommitType_UpdateResources
 	}
 	return ""
 }
@@ -100,12 +104,12 @@ func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 					commitType = commitTypeForMessage(gogsPayload.Commits[0].Message)
 				}
 			}
-			payloadStr := string(payload)
+			//payloadStr := string(payload)
 			gitLog("Got payload from %s, type: %s", r.URL.Path, commitType)
 			if commitType == CommitType_TryDeploy && isGogs ||
 				commitType == CommitType_ReleaseDeploy && isDrone {
 				gitLog("Start rebuild...")
-				gitStartChannel <- payloadStr
+				gitStartChannel <- commitType
 			}
 			w.Write([]byte("Fresh: OK"))
 		}
