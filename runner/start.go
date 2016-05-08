@@ -196,14 +196,24 @@ func Start() {
 	initFolders()
 	setEnvVars()
 
+	_, err := os.Stat(buildPath)
+	noExistingBuild := err != nil
+	if noExistingBuild {
+		mainLog("No existing build, will start build")
+	}
+
 	if git_pull_mode() {
 		watchGit()
 		gitStart()
-		gitStartChannel <- "/"
+		if noExistingBuild {
+			gitStartChannel <- "/"
+		}
 	} else {
 		watch()
 		start()
-		startChannel <- "/"
+		if noExistingBuild {
+			startChannel <- "/"
+		}
 	}
 
 	<-make(chan int)
