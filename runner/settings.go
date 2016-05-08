@@ -129,6 +129,9 @@ func tmpPath() string {
 }
 
 func buildName() string {
+	if app_name() != "" {
+		return app_name()
+	}
 	return settings["build_name"]
 }
 
