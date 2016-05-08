@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"encoding/json"
 	"github.com/howeyc/fsnotify"
 	"io/ioutil"
 	"net/http"
@@ -43,20 +44,64 @@ func watchFolder(path string) {
 	}
 }
 
+const (
+	CommitType_TryDeploy     = "try dep"
+	CommitType_ReleaseDeploy = "rel dep"
+)
+
+func commitTypeForMessage(msg string) string {
+	lowerMsg := strings.ToLower(msg)
+	if strings.Index(lowerMsg, CommitType_TryDeploy) > -1 {
+		return CommitType_TryDeploy
+	}
+	if strings.Index(lowerMsg, CommitType_ReleaseDeploy) > -1 {
+		return CommitType_ReleaseDeploy
+	}
+	return ""
+}
+
 func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 	gitLog("Got request: %s", r.URL.Path) // /drone or /gogs
+	isDrone := r.URL.Path == "/drone"
+	isGogs := !isDrone
 	if r.Method == "POST" {
 		payload, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			gitLog("Read payload error %s", err.Error())
 			w.WriteHeader(500)
 			w.Write([]byte("Fresh: Error reading payload: " + err.Error()))
+			return
 		} else {
+			var commitType string = ""
+			if isDrone {
+				var dronePayload DronePayload
+				err = json.Unmarshal(payload, &dronePayload)
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte("Fresh: Unmarshal DronePayload error: " + err.Error()))
+					return
+				}
+				commitType = commitTypeForMessage(dronePayload.Build.Message)
+			} else {
+				var gogsPayload GogsPayload
+				err = json.Unmarshal(payload, &gogsPayload)
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte("Fresh: Unmarshal GogsPayload error: " + err.Error()))
+					return
+				}
+				if len(gogsPayload.Commits) > 0 {
+					commitType = commitTypeForMessage(gogsPayload.Commits[0].Message)
+				}
+			}
 			payloadStr := string(payload)
-			gitLog("Got payload:")
-			gitLog(payloadStr)
+			gitLog("Got payload from %s, type: %s", r.URL.Path, commitType)
+			if commitType == CommitType_TryDeploy && isGogs ||
+				commitType == CommitType_ReleaseDeploy && isDrone {
+				gitLog("Start rebuild...")
+				gitStartChannel <- payloadStr
+			}
 			w.Write([]byte("Fresh: OK"))
-			gitStartChannel <- payloadStr
 		}
 	} else {
 		w.Write([]byte("Fresh: running for " + app_name()))
