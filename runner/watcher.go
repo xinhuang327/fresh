@@ -61,7 +61,7 @@ func commitTypeForMessage(msg string) string {
 }
 
 func watchGitHandler(w http.ResponseWriter, r *http.Request) {
-	gitLog("Got request: %s", r.URL.Path) // /drone or /gogs
+	//gitLog("Got request: %s", r.URL.Path) // /drone or /gogs
 	isDrone := r.URL.Path == "/drone"
 	isGogs := !isDrone
 	if r.Method == "POST" {
@@ -82,6 +82,7 @@ func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				if dronePayload.Build.Status == "success" {
+					gitLog("Commit message: %s", dronePayload.Build.Message)
 					commitType = commitTypeForMessage(dronePayload.Build.Message)
 				} else {
 					gitLog("Drone build failed")
@@ -95,6 +96,7 @@ func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				if len(gogsPayload.Commits) > 0 {
+					gitLog("Commit message: %s", gogsPayload.Commits[0].Message)
 					commitType = commitTypeForMessage(gogsPayload.Commits[0].Message)
 				}
 			}
