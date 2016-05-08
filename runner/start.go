@@ -83,7 +83,8 @@ func gitStart() {
 			if !ok {
 				mainLog("Build Failed: \n %s", errorMessage)
 				if !started {
-					os.Exit(1)
+					//os.Exit(1)
+					continue
 				}
 				createBuildErrorsLog(errorMessage)
 			} else {
