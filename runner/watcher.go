@@ -44,7 +44,7 @@ func watchFolder(path string) {
 }
 
 func watchGitHandler(w http.ResponseWriter, r *http.Request) {
-	gitLog("Got request: ", r.URL.Path)
+	gitLog("Got request: %s", r.URL.Path) // /drone or /gogs
 	if r.Method == "POST" {
 		payload, err := ioutil.ReadAll(r.Body)
 		if err != nil {
