@@ -53,9 +53,10 @@ func gitStart() {
 		for {
 			loopIndex++
 			mainLog("Waiting (loop %d)...", loopIndex)
-			gitInfo := <-gitStartChannel
+			<-gitStartChannel
 
-			mainLog("receiving first event %s", gitInfo)
+			mainLog("receiving git event")
+			//mainLog("receiving first event %s", gitInfo)
 			mainLog("sleeping for %d milliseconds", buildDelay)
 			time.Sleep(buildDelay * time.Millisecond)
 			mainLog("flushing git events")

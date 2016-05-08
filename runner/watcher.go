@@ -81,7 +81,11 @@ func watchGitHandler(w http.ResponseWriter, r *http.Request) {
 					w.Write([]byte("Fresh: Unmarshal DronePayload error: " + err.Error()))
 					return
 				}
-				commitType = commitTypeForMessage(dronePayload.Build.Message)
+				if dronePayload.Build.Status == "success" {
+					commitType = commitTypeForMessage(dronePayload.Build.Message)
+				} else {
+					gitLog("Drone build failed")
+				}
 			} else {
 				var gogsPayload GogsPayload
 				err = json.Unmarshal(payload, &gogsPayload)
