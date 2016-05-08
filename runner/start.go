@@ -206,7 +206,7 @@ func Start() {
 		watchGit()
 		gitStart()
 		if noExistingBuild {
-			gitStartChannel <- "/"
+			gitStartChannel <- CommitType_UpdateResources
 		}
 	} else {
 		watch()
