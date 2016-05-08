@@ -112,6 +112,18 @@ func root() string {
 	return settings["root"]
 }
 
+func git_pull_mode() bool {
+	return settings["git_pull_mode"] == "true"
+}
+
+func server_port() string {
+	return settings["server_port"]
+}
+
+func app_name() string {
+	return settings["app_name"]
+}
+
 func tmpPath() string {
 	return settings["tmp_path"]
 }
