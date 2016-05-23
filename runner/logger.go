@@ -24,7 +24,8 @@ func newLogFunc(prefix string) func(string, ...interface{}) {
 	if isApp {
 		return func(format string, v ...interface{}) {
 			format = fmt.Sprintf("%s%s", color, format)
-			logger.Printf(format, v...)
+			//logger.Printf(format, v...)
+			logger.Print(format)
 		}
 	} else {
 		return func(format string, v ...interface{}) {

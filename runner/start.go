@@ -179,13 +179,13 @@ func alreadyHasBuild() bool {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	output, err := cmd.Output()
 	if err != nil {
-		mainLog("Get git revision error:", err.Error())
+		mainLog("Get git revision error: %s", err)
 		return false
 	}
 	filePath := filepath.Join(tmpPath(), VersionFileName)
 	existingRev, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		mainLog("Get build revision error:", err.Error())
+		mainLog("Get build revision error: %s", err)
 		return false
 	}
 	gitRev := string(output)
