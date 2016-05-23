@@ -2,8 +2,10 @@ package runner
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -83,7 +85,7 @@ func gitStart() {
 				// restart without build
 				stopChannel <- true
 				run()
-			} else {
+			} else if !alreadyHasBuild() {
 				errorMessage, ok := build()
 				if !ok {
 					mainLog("Build Failed: \n %s", errorMessage)
@@ -93,11 +95,17 @@ func gitStart() {
 					}
 					createBuildErrorsLog(errorMessage)
 				} else {
+					writeBuildRevision()
 					if started {
 						stopChannel <- true
 					}
 					run()
 				}
+			} else {
+				if started {
+					stopChannel <- true
+				}
+				run()
 			}
 
 			started = true
@@ -152,11 +160,57 @@ func start() {
 					run()
 				}
 			}
-
 			started = true
 			mainLog(strings.Repeat("-", 20))
 		}
 	}()
+}
+
+const VersionFileName = "build_revision.txt"
+
+func alreadyHasBuild() bool {
+	_, err := os.Stat(buildPath())
+	noExistingBuild := err != nil
+	if noExistingBuild {
+		return false
+	}
+	mainLog("Check if already has a build...")
+	// git rev-parse HEAD
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		mainLog("Get git revision error:", err.Error())
+		return false
+	}
+	filePath := filepath.Join(tmpPath(), VersionFileName)
+	existingRev, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		mainLog("Get build revision error:", err.Error())
+		return false
+	}
+	gitRev := string(output)
+	buildRev := string(existingRev)
+	mainLog("git rev: %s, build rev: %s", gitRev, buildRev)
+	if gitRev == buildRev {
+		mainLog("Revision equals. Skip build.")
+	}
+	return gitRev == buildRev
+}
+
+func writeBuildRevision() {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		mainLog("Get git revision error", err)
+		return
+	}
+	filePath := filepath.Join(tmpPath(), VersionFileName)
+	err = ioutil.WriteFile(filePath, output, 0664)
+	if err != nil {
+		mainLog("Write revision file error", err)
+		return
+	}
+	mainLog("writeBuildRevision", string(output))
 }
 
 func init() {
@@ -205,11 +259,7 @@ func Start() {
 	if git_pull_mode() {
 		watchGit()
 		gitStart()
-		if noExistingBuild {
-			gitStartChannel <- "/"
-		} else {
-			gitStartChannel <- CommitType_UpdateResources // just start existing binary
-		}
+		gitStartChannel <- "/" // gitStart() will check if already has a build
 	} else {
 		watch()
 		start()
